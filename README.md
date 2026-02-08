@@ -1,71 +1,44 @@
-# Indian Tourist Place Recommendation
+# 🇮🇳 Indian Tourist Place Recommendation
 
-Hybrid TF-IDF + SBERT place recommender for Indian tourist places.  
-Search by natural-language queries (e.g. **"temples in varanasi"** , **"beach in goa"**) and get place-level recommendations with strict city filtering, intent tagging, and confidence-aware ranking.
+A hybrid **TF-IDF + SBERT** based recommendation system for Indian tourist places.
 
----
+Search using natural language queries like:
 
-## Table of contents
+- temples in varanasi
+- beach in goa
 
-- [Project overview](#project-overview)
-- [Features](#features)
-- [Architecture](#architecture)
-- [Project structure](#project-structure)
-- [Quick start — run locally](#quick-start---run-locally)
-- [Prepare data / Notes about dataset](#prepare-data--notes-about-dataset)
-- [How it works (short)](#how-it-works-short)
-- [CLI demo (screenshot)](#cli-demo-screenshot)
-- [Search queries used for screenshots](#search-queries-used-for-screenshots)
-- [Development notes & troubleshooting](#development-notes--troubleshooting)
-- [Contributing, license & contact](#contributing-license--contact)
+The system automatically detects **city + intent** and returns **ranked place-level results** with smart ranking.
 
 ---
 
-## Project overview
+## ✨ Features
 
-This repository implements a hybrid search engine that returns **place-level** results for tourist destinations in India. The pipeline combines classic TF-IDF with SBERT semantic embeddings, performs SBERT-based auto-tagging (hill, beach, temple, fort, etc.), and a confidence-aware ranking using `avg_rating × log1p(review_count)` so places with more reviews are favored appropriately.
-
-This project is suitable for a resume/portfolio and easy to extend into a Streamlit or Flask demo later.
-
----
-
-## Features
-
-- Strict city detection and filtering: when a city is detected in the query, results are **only** returned from that city (no silent all-India fallback).
-- Canonical city mapping + fuzzy matching for common misspellings (e.g., `bangalore → bengaluru`, `new delhi → delhi`, `mumabi → mumbai`).
-- Hybrid scoring: TF-IDF + SBERT similarity.
-- SBERT-based auto-tagging for intent (e.g., `temple`, `beach`, `fort`) and phrase-to-tag mapping for multi-word intents (e.g., `street food → food`).
-- Soft tag boosting and optional hard tag filters.
-- Ranking boost: `avg_rating × log1p(review_count)` to favour trustworthy places.
-- Diagnostics printed for each query (detected_city, detected_tags, city_mask.sum(), candidate_count_after_tag_filter).
+- Strict city filtering (no cross-city results)
+- Hybrid search (**TF-IDF + SBERT semantic similarity**)
+- Automatic intent tagging (temple, beach, fort, food, etc.)
+- Confidence-aware ranking (**rating × review count**)
+- Fast CLI interface
+- Easy to extend to Streamlit / Web app
 
 ---
 
-## Architecture
+## 🏗️ Architecture
 
-Mermaid flowchart of the system pipeline:
+Dataset → Cleaning → Place Aggregation → TF-IDF + SBERT → Auto Tagging → Hybrid Ranking → Top Results
 
-```mermaid
-flowchart LR
+---
 
-A[Raw Dataset Review_db.csv] --> B[Data Loader]
-B --> C[Place-level Aggregation]
-C --> D[City Canonicalization]
+## 🛠️ Requirements
 
-D --> E[TF-IDF Vectorizer]
-D --> F[SBERT Embeddings]
-D --> G[Auto Tagging]
+- Python 3.8+
+- numpy
+- pandas
+- scikit-learn
+- sentence-transformers
+- torch
 
-E --> H[Hybrid Search Engine]
-F --> H
-G --> H
+Install dependencies:
 
-H --> I[City Detection]
-H --> J[Intent / Tag Detection]
-
-I --> K[Filtering]
-J --> K
-
-K --> L[Ranking<br/>TF-IDF + SBERT + Rating Boost]
-L --> M[Top-N Results to User]
+```bash
+pip install -r requirements.txt
 ```
