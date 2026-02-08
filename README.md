@@ -13,12 +13,14 @@ The system automatically detects **city + intent** and returns **ranked place-le
 
 ## ✨ Features
 
-- Strict city filtering (no cross-city results)
-- Hybrid search (**TF-IDF + SBERT semantic similarity**)
-- Automatic intent tagging (temple, beach, fort, food, etc.)
-- Confidence-aware ranking (**rating × review count**)
-- Fast CLI interface
-- Easy to extend to Streamlit / Web app
+- Loads and cleans tourist review dataset
+- Groups data at place level (City + Place)
+- Searches using TF-IDF and SBERT similarity
+- Automatically detects place type (temple, beach, fort, food, etc.)
+- Returns results only from the requested city
+- Ranks places using ratings and number of reviews
+- Simple command line interface
+- Easy to extend into a web app (Streamlit/Flask)
 
 ---
 
