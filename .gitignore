@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+*.tmp
+
+# Virtual environments
+venv/
+.env/
+env/
+
+# Data files (keep datasets local)
+data/
+
+# Notebook checkpoints
+.ipynb_checkpoints/
+
+# Model weights / cache
+*.pt
+*.pth
+*.ckpt
+*.bin
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
