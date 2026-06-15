@@ -42,7 +42,17 @@ def load_search_backend(
 
     place_reviews = pd.read_csv(prepared_csv)
 
-    # TF-IDF
+    # ---------------- Search Text Preparation ----------------
+    # If full_text is missing in saved CSV, rebuild it from available columns
+    if "full_text" not in place_reviews.columns:
+
+        place_reviews["full_text"] = (
+            place_reviews["City"].fillna("").astype(str) + " " +
+            place_reviews["Place"].fillna("").astype(str) + " " +
+            place_reviews["short_description"].fillna("").astype(str)
+        )
+
+    # ---------------- TF-IDF ----------------
     tfidf = TfidfVectorizer(
         stop_words="english",
         ngram_range=(1, 2),
@@ -53,6 +63,7 @@ def load_search_backend(
         place_reviews["full_text"].astype(str)
     )
 
+    # ---------------- Tag Names ----------------
     tag_names = list(TAG_QUERIES.keys())
 
     # SBERT runtime

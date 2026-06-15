@@ -15,8 +15,10 @@ env/
 
 # Data files (keep datasets local)
 
-data/
-*.csv
+# data/
+# *.csv
+data/Review_db.csv
+data/places_with_tags.csv
 
 # Jupyter / Kaggle
 
