@@ -1,46 +1,141 @@
-# 🇮🇳 Indian Tourist Place Recommendation
+# GenAI Indian Tourist Place Recommendation System
 
-A hybrid **TF-IDF + SBERT** based recommendation system for Indian tourist places.
+An AI-powered **tourist place recommendation system** that helps users discover the best places to visit in India using **semantic search**, **intent detection**, and **explainable recommendations**.
 
-Search using natural language queries like:
-
-- temples in varanasi
-- beach in goa
-
-The system automatically detects **city + intent** and returns **ranked place-level results** with smart ranking.
+This project combines **TF-IDF**, **Sentence-BERT (SBERT)**, and intelligent ranking techniques to provide personalized and relevant travel recommendations based on user queries.
 
 ---
 
-## ✨ Features
+## Live Demo
 
-- Loads and cleans tourist review dataset
-- Groups data at place level (City + Place)
-- Searches using TF-IDF and SBERT similarity
-- Automatically detects place type (temple, beach, fort, food, etc.)
-- Returns results only from the requested city
-- Ranks places using ratings and number of reviews
-- Simple command line interface
-- Easy to extend into a web app (Streamlit/Flask)
+**Streamlit App:**
+https://indian-tourist-place-recommendation-5nyyukhh6ccsjs6mchveac.streamlit.app/
+
+**GitHub Repository:**
+https://github.com/SayanGhorai/Indian-Tourist-Place-Recommendation
 
 ---
 
-## 🏗️ Architecture
+## Features
 
-Dataset → Cleaning → Place Aggregation → TF-IDF + SBERT → Auto Tagging → Hybrid Ranking → Top Results
+- Hybrid Search using **TF-IDF + Sentence-BERT**
+- Semantic understanding of user queries
+- Intent-aware recommendation system
+- City-aware strict filtering
+- Explainable AI recommendations
+- Pros / Cons extraction from reviews
+- Confidence-based ranking
+- Interactive Streamlit UI
+- Expandable place insights
 
 ---
 
-## 🛠️ Requirements
+## Project Architecture
 
-- Python 3.8+
-- numpy
-- pandas
-- scikit-learn
-- sentence-transformers
-- torch
-
-Install dependencies:
-
-```bash
-pip install -r requirements.txt
+```text
+User Query
+   ↓
+City Detection
+   ↓
+Intent Detection
+   ↓
+TF-IDF Retrieval
+   ↓
+SBERT Semantic Ranking
+   ↓
+Tag Boosting
+   ↓
+Confidence Score Ranking
+   ↓
+Final Recommendations
+   ↓
+Explainable Place Insights
 ```
+
+---
+
+## Tech Stack
+
+- Python
+- Pandas
+- NumPy
+- Scikit-learn
+- Sentence Transformers
+- Streamlit
+
+---
+
+## Dataset
+
+This project uses the **Kaggle Indian Places to Visit Reviews Dataset**.
+
+Dataset highlights:
+
+- 1.5 Million anonymous reviews
+- 1782 cleaned cities
+- Real traveler feedback
+- Place-level aggregated recommendations
+
+---
+
+## Project Structure
+
+```text
+Indian-Tourist-Place-Recommendation/
+│── assets/
+│   ├── homepage.png
+│   ├── recommendation-results.png
+│   ├── place-highlights.png
+│── data/
+│   ├── Review_db.csv
+│   ├── places_with_tags.csv
+│   ├── places_genai_ready.csv
+│── src/
+│   ├── data_loader.py
+│   ├── tagging.py
+│   ├── search_engine.py
+│── streamlit_app.py
+│── app.py
+│── README.md
+│── requirements.txt
+```
+
+---
+
+## Demo Screenshots
+
+### Homepage
+
+### Recommendation Results
+
+### Place Highlights
+
+---
+
+## Example Queries
+
+- best street food in Delhi
+- peaceful beaches in Goa
+- historical places in Jaipur
+- spiritual places in Varanasi
+- family trip places in Kolkata
+
+---
+
+## Future Improvements (Phase 2)
+
+- AI itinerary planner
+- Budget estimation
+- Nearby hotel recommendations
+- Best season suggestions
+- Route optimization
+- Agentic travel planning with Gemini/OpenAI
+
+---
+
+## Author
+
+**Sayan Ghorai**
+M.Tech in Artificial Intelligence and Data Science
+
+---
