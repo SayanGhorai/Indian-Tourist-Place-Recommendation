@@ -119,9 +119,9 @@ Indian-Tourist-Place-Recommendation/
 
 - best street food in Delhi
 - peaceful beaches in Goa
-- historical places in Jaipur
-- spiritual places in Varanasi
 - family trip places in Kolkata
+- forts in Jaipur
+- temple in Varanasi
 
 ---
 
