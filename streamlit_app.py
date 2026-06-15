@@ -41,7 +41,7 @@ with st.sidebar:
     st.caption("""
 Kaggle Indian Places Dataset  
 1.5M Reviews  
-1782 Canonical Cities
+1782 Cleaned Cities
 """)
 
     st.markdown("### ⚙ Built With")
@@ -61,7 +61,7 @@ Sentence Transformers • Streamlit
 st.title("GenAI Indian Tourist Place Recommendation System")
 
 st.caption(
-    "Find the best places in India using semantic AI search and explainable recommendations."
+    "Get Recommendations for the best places in India using semantic AI search and explainable recommendations."
 )
 
 query = st.text_input(
@@ -105,7 +105,7 @@ if search_btn:
                 use_container_width=True
             )
 
-            st.markdown("## Detailed Recommendations")
+            st.markdown("## Place Highlights")
 
             for idx, row in results.iterrows():
 
