@@ -8,8 +8,8 @@ from src.search_engine import (
 
 # ---------------- Page Config ----------------
 st.set_page_config(
-    page_title="Hybrid GenAI Tourist Recommender",
-    page_icon="🌍",
+    page_title="GenAI Indian Tourist Place Recommendation System",
+    page_icon="🇮🇳",
     layout="wide"
 )
 
@@ -23,112 +23,133 @@ def load_backend():
 
 load_backend()
 
-# ---------------- Header ----------------
-st.title("🌍 Hybrid GenAI Tourist Place Recommendation System")
-st.markdown(
-    """
-    Discover the best tourist destinations across India using **Hybrid AI Retrieval (TF-IDF + SBERT)**  
-    with **semantic intent understanding, explainable ranking, and personalized recommendations**.
-    """
-)
-
 # ---------------- Sidebar ----------------
-st.sidebar.header("⚙ Search Settings")
+st.sidebar.title("ℹ About Project")
+
+st.sidebar.markdown("""
+### 📌 This application uses:
+
+- **Semantic Search (TF-IDF + SBERT)**
+- **Intent Detection**
+- **City-aware Filtering**
+- **Explainable Recommendations**
+- **Pros / Cons Extraction**
+
+---
+
+### 📂 Dataset
+Kaggle Indian Places to Visit Reviews Dataset
+
+---
+
+### ⚙ Built With
+
+- Python
+- Pandas
+- Scikit-learn
+- Sentence Transformers
+- Streamlit
+""")
 
 top_n = st.sidebar.slider(
-    "Number of recommendations",
+    "Recommendations",
     min_value=3,
     max_value=10,
     value=5
 )
 
-# ---------------- Search Input ----------------
+# ---------------- Main Header ----------------
+st.title("🇮🇳 GenAI Indian Tourist Place Recommendation System")
+
+st.markdown("""
+Explore India's most loved destinations with an AI-powered travel recommendation engine.  
+Get personalized suggestions based on your interests, travel style, and intent — powered by semantic understanding, intelligent ranking, and explainable insights from real traveler reviews.
+""")
+
+# ---------------- Search ----------------
 query = st.text_input(
-    "🔎 Enter your travel preference",
+    "🔍 What kind of place are you looking for?",
     placeholder="Example: peaceful beach in goa"
 )
 
 search_btn = st.button("Find Places")
 
-# ---------------- Search ----------------
+# ---------------- Results ----------------
 if search_btn:
 
     if not query.strip():
-        st.warning("Please enter a travel query.")
+        st.warning("Please enter your travel preference.")
+
     else:
         with st.spinner("Finding best places for you..."):
+
             results = hybrid_search_with_tags(
                 query=query,
                 top_n=top_n
             )
 
         if results.empty:
-            st.error("No places found for this query.")
+            st.error("No places found.")
+
         else:
-            st.success(f"Found {len(results)} recommendations")
+            st.success(f"Top {len(results)} recommendations for: {query}")
 
             for idx, row in results.iterrows():
 
-                st.markdown("---")
+                with st.container():
 
-                col1, col2 = st.columns([3, 1])
+                    st.markdown("---")
 
-                with col1:
-                    st.subheader(f"📍 {row['Place']}")
-                    st.caption(f"City: {row['City']}")
+                    col1, col2 = st.columns([4, 1])
 
-                with col2:
-                    st.metric(
-                        label="⭐ Rating",
-                        value=round(float(row["avg_rating"]), 2)
-                    )
+                    with col1:
+                        st.subheader(f"{idx+1}. 📍 {row['Place']}")
+                        st.caption(f"📌 {row['City']}")
 
-                # Tags
-                st.markdown("### 🏷 Tags")
-                if isinstance(row["auto_tags"], str):
-                    st.write(row["auto_tags"])
-                else:
-                    st.write(", ".join(row["auto_tags"]))
+                    with col2:
+                        st.metric(
+                            "⭐ Rating",
+                            round(float(row["avg_rating"]), 2)
+                        )
 
-                # Keywords
-                st.markdown("### 🔑 Top Keywords")
-                if "top_keywords" in row and pd.notna(row["top_keywords"]):
-                    st.write(row["top_keywords"])
+                    # Compact AI Summary
+                    st.markdown("### 🧠 Why this place?")
 
-                # Pros / Cons
-                col3, col4 = st.columns(2)
+                    if pd.notna(row["recommendation_explanation"]):
+                        st.info(row["recommendation_explanation"])
 
-                with col3:
-                    st.markdown("### 👍 Pros")
-                    if pd.notna(row["pros"]):
-                        st.success(row["pros"])
-                    else:
-                        st.write("No major positives extracted.")
+                    # Small compact tags
+                    if isinstance(row["auto_tags"], list):
+                        st.caption(
+                            "🏷 " + " | ".join(row["auto_tags"][:3])
+                        )
 
-                with col4:
-                    st.markdown("### ⚠ Cons")
-                    if pd.notna(row["cons"]):
-                        st.warning(row["cons"])
-                    else:
-                        st.write("No major negatives extracted.")
+                    # Expandable details
+                    with st.expander("View Details"):
 
-                # AI Explanation
-                st.markdown("### 🧠 Why Recommended?")
-                if pd.notna(row["recommendation_explanation"]):
-                    st.info(row["recommendation_explanation"])
+                        if isinstance(row["top_keywords"], list):
+                            st.markdown(
+                                f"**Keywords:** {', '.join(row['top_keywords'][:5])}"
+                            )
 
-                # Score
-                st.progress(min(float(row["final_score"]), 1.0))
+                        col3, col4 = st.columns(2)
 
-# ---------------- Footer ----------------
-st.markdown("---")
-st.markdown(
-    """
-    Built with:
-    - **TF-IDF**
-    - **Sentence-BERT**
-    - **Hybrid Retrieval**
-    - **Intent Detection**
-    - **Explainable AI**
-    """
-)
+                        with col3:
+                            if isinstance(row["pros"], list) and len(row["pros"]) > 0:
+                                st.success(
+                                    "Pros: " + ", ".join(row["pros"][:5])
+                                )
+
+                        with col4:
+                            if isinstance(row["cons"], list) and len(row["cons"]) > 0:
+                                st.warning(
+                                    "Cons: " + ", ".join(row["cons"][:5])
+                                )
+
+                        st.progress(
+                            min(float(row["final_score"]), 1.0)
+                        )
+
+                        st.caption(
+                            f"Confidence Score: {round(float(row['final_score']), 3)}"
+                        )
