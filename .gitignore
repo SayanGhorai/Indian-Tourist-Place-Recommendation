@@ -1,5 +1,6 @@
 # Python
-__pycache__/
+
+**pycache**/
 *.pyc
 *.pyo
 *.pyd
@@ -7,23 +8,61 @@ __pycache__/
 *.tmp
 
 # Virtual environments
+
 venv/
 .env/
 env/
 
 # Data files (keep datasets local)
+
 data/
+*.csv
 
-# Notebook checkpoints
+# Jupyter / Kaggle
+
 .ipynb_checkpoints/
+*.ipynb
 
-# Model weights / cache
+# Model weights / embeddings
+
 *.pt
 *.pth
 *.ckpt
 *.bin
+*.pkl
+*.joblib
+models/
+
+# Streamlit cache
+
+.streamlit/secrets.toml
+
+# Environment variables / API keys
+
+.env
+.env.local
 
 # OS / Editor
+
 .DS_Store
 Thumbs.db
 .vscode/
+.idea/
+
+# Build / distribution
+
+build/
+dist/
+*.egg-info/
+
+# Testing / coverage
+
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Misc
+
+.cache/
+temp/
+tmp/
