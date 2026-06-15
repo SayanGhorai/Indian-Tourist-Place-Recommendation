@@ -9,19 +9,28 @@ from src.search_engine import (
 # ---------------- Page Config ----------------
 st.set_page_config(
     page_title="GenAI Indian Tourist Place Recommendation System",
-    page_icon="🇮🇳",
+    page_icon="🗺️",
     layout="wide"
 )
 
 # ---------------- Load Backend ----------------
 @st.cache_resource
 def load_backend():
-    load_search_backend(
-        prepared_csv="data/places_genai_ready.csv",
-        load_embeddings=True
-    )
+    try:
+        load_search_backend(
+            prepared_csv="data/places_genai_ready.csv",
+            load_embeddings=True
+        )
+        return True
+    except Exception as e:
+        return str(e)
 
-load_backend()
+backend_loaded = load_backend()
+
+# Show backend error if failed
+if backend_loaded != True:
+    st.error(f"Backend loading failed: {backend_loaded}")
+    st.stop()
 
 # ---------------- Sidebar ----------------
 with st.sidebar:
@@ -55,21 +64,21 @@ Sentence Transformers • Streamlit
         min_value=3,
         max_value=10,
         value=5
-    )  
+    )
 
 # ---------------- Main ----------------
 st.title("GenAI Indian Tourist Place Recommendation System")
 
 st.caption(
-    "Get Recommendations for the best places in India using semantic AI search and explainable recommendations."
+    "Get recommendations for the best places in India using semantic AI search and explainable recommendations."
 )
 
 query = st.text_input(
     "Search your travel preference",
-    placeholder="Example: best street food in delhi"
+    placeholder="Example: best street food in Delhi"
 )
 
-search_btn = st.button("Find Places")
+search_btn = st.button("Get Recommendations")
 
 # ---------------- Results ----------------
 if search_btn:
@@ -79,26 +88,29 @@ if search_btn:
 
     else:
         with st.spinner("Searching..."):
+
             results = hybrid_search_with_tags(
                 query=query,
                 top_n=top_n
             )
 
         if results.empty:
-            st.error("No results found.")
+            st.error("No places found.")
 
         else:
             st.success(f"Showing top {len(results)} places")
 
-            # Compact Table View (like Kaggle)
-            table_df = results[[
-                "City",
-                "Place",
-                "avg_rating",
-                "auto_tags",
-                "top_keywords",
-                "final_score"
-            ]].copy()
+            # Table View
+            table_df = results[
+                [
+                    "City",
+                    "Place",
+                    "avg_rating",
+                    "auto_tags",
+                    "top_keywords",
+                    "final_score"
+                ]
+            ].copy()
 
             st.dataframe(
                 table_df,
@@ -109,13 +121,17 @@ if search_btn:
 
             for idx, row in results.iterrows():
 
-                with st.expander(f"{idx+1}. {row['Place']} ({row['City']})"):
+                with st.expander(
+                    f"{idx+1}. {row['Place']} ({row['City']})"
+                ):
 
                     col1, col2 = st.columns([3, 1])
 
                     with col1:
                         st.write("### Why recommended?")
-                        st.info(row["recommendation_explanation"])
+                        st.info(
+                            row["recommendation_explanation"]
+                        )
 
                     with col2:
                         st.metric(
@@ -124,10 +140,14 @@ if search_btn:
                         )
 
                     st.write("**Tags:**")
-                    st.write(", ".join(row["auto_tags"][:5]))
+                    st.write(
+                        ", ".join(row["auto_tags"][:5])
+                    )
 
                     st.write("**Top Keywords:**")
-                    st.write(", ".join(row["top_keywords"][:5]))
+                    st.write(
+                        ", ".join(row["top_keywords"][:5])
+                    )
 
                     col3, col4 = st.columns(2)
 
