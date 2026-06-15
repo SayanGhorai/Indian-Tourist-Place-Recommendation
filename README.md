@@ -11,9 +11,6 @@ This project combines **TF-IDF**, **Sentence-BERT (SBERT)**, and intelligent ran
 **Streamlit App:**
 https://indian-tourist-place-recommendation-5nyyukhh6ccsjs6mchveac.streamlit.app/
 
-**GitHub Repository:**
-https://github.com/SayanGhorai/Indian-Tourist-Place-Recommendation
-
 ---
 
 ## Features
@@ -106,9 +103,15 @@ Indian-Tourist-Place-Recommendation/
 
 ### Homepage
 
+![Homepage](assets/homepage.png)
+
 ### Recommendation Results
 
+![Recommendation Results](assets/recommendation-results.png)
+
 ### Place Highlights
+
+![Place Highlights](assets/place-highlights.png)
 
 ---
 
