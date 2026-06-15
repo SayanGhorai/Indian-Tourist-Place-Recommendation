@@ -1,4 +1,6 @@
 import os
+import re
+import ast
 import numpy as np
 import pandas as pd
 import torch
@@ -10,14 +12,14 @@ from sentence_transformers import util
 
 from src.tagging import (
     TAG_QUERIES,
-    PHRASE_TO_TAG,
+    CITY_ALIAS_MAP,
     detect_city,
     detect_intent,
     print_diagnostics,
     init_sbert_model
 )
 
-# ---------------- Global Runtime Objects ----------------
+# ---------------- Global Objects ----------------
 place_reviews = None
 tfidf = None
 tfidf_matrix = None
@@ -28,31 +30,67 @@ tag_names = None
 tag_norm = None
 
 
-# ---------------- Load Runtime Backend ----------------
+# ---------------- Helpers ----------------
+def _norm_city(s):
+    if pd.isna(s):
+        return ""
+    s = str(s).strip().lower()
+    s = re.sub(r"[^\w\s]", "", s)
+    s = re.sub(r"\s+", " ", s)
+    return s
+
+
+def _empty_results_df():
+    cols = [
+        "City", "Place", "avg_rating", "review_count",
+        "auto_tag", "auto_tags", "top_keywords",
+        "pros", "cons", "recommendation_explanation",
+        "final_score"
+    ]
+    return pd.DataFrame(columns=cols)
+
+
+# ---------------- Load Backend ----------------
 def load_search_backend(
     prepared_csv="data/places_genai_ready.csv",
     load_embeddings=True,
     sbert_model_name="all-MiniLM-L6-v2"
 ):
     global place_reviews, tfidf, tfidf_matrix
-    global model, corpus_embeddings, tag_embeddings, tag_names, tag_norm
+    global model, corpus_embeddings, tag_embeddings
+    global tag_names, tag_norm
 
     if not os.path.exists(prepared_csv):
         raise FileNotFoundError(f"{prepared_csv} not found")
 
     place_reviews = pd.read_csv(prepared_csv)
 
-    # ---------------- Search Text Preparation ----------------
-    # If full_text is missing in saved CSV, rebuild it from available columns
+    # rebuild full_text if missing
     if "full_text" not in place_reviews.columns:
-
         place_reviews["full_text"] = (
             place_reviews["City"].fillna("").astype(str) + " " +
             place_reviews["Place"].fillna("").astype(str) + " " +
-            place_reviews["short_description"].fillna("").astype(str)
+            place_reviews["recommendation_explanation"].fillna("").astype(str)
         )
 
-    # ---------------- TF-IDF ----------------
+    # rebuild City_canon if missing
+    if "City_canon" not in place_reviews.columns:
+        place_reviews["City_canon"] = (
+            place_reviews["City"]
+            .fillna("")
+            .astype(str)
+            .apply(_norm_city)
+            .apply(lambda x: CITY_ALIAS_MAP.get(x, x))
+        )
+
+    # parse list-like columns
+    for col in ["auto_tags", "top_keywords", "pros", "cons"]:
+        if col in place_reviews.columns:
+            place_reviews[col] = place_reviews[col].apply(
+                lambda x: ast.literal_eval(x) if isinstance(x, str) else []
+            )
+
+    # TF-IDF
     tfidf = TfidfVectorizer(
         stop_words="english",
         ngram_range=(1, 2),
@@ -63,10 +101,8 @@ def load_search_backend(
         place_reviews["full_text"].astype(str)
     )
 
-    # ---------------- Tag Names ----------------
     tag_names = list(TAG_QUERIES.keys())
 
-    # SBERT runtime
     if load_embeddings:
         model = init_sbert_model(sbert_model_name)
 
@@ -88,21 +124,10 @@ def load_search_backend(
 
     print("Search backend loaded")
     print(f"Places: {len(place_reviews)}")
-    print(f"TF-IDF matrix: {tfidf_matrix.shape}")
+    print(f"TF-IDF shape: {tfidf_matrix.shape}")
 
 
-# ---------------- Empty Results ----------------
-def _empty_results_df():
-    cols = [
-        "City", "Place", "avg_rating", "review_count",
-        "auto_tag", "auto_tags", "top_keywords",
-        "pros", "cons", "recommendation_explanation",
-        "final_score"
-    ]
-    return pd.DataFrame(columns=cols)
-
-
-# ---------------- Main Search ----------------
+# ---------------- Search ----------------
 def hybrid_search_with_tags(
     query,
     top_n=5,
@@ -111,18 +136,17 @@ def hybrid_search_with_tags(
     rating_boost_weight=0.15
 ):
     global place_reviews, tfidf, tfidf_matrix
-    global model, corpus_embeddings, tag_embeddings, tag_names, tag_norm
+    global model, corpus_embeddings
+    global tag_names, tag_norm
 
     if place_reviews is None:
         raise RuntimeError("Run load_search_backend() first")
 
     n_places = len(place_reviews)
 
-    # TF-IDF scores
     q_vec = tfidf.transform([query])
     tfidf_scores = cosine_similarity(q_vec, tfidf_matrix).flatten()
 
-    # SBERT scores
     query_emb = model.encode(query, convert_to_tensor=True)
 
     sbert_scores = util.cos_sim(
@@ -130,10 +154,9 @@ def hybrid_search_with_tags(
         corpus_embeddings
     ).cpu().numpy().flatten()
 
-    # Hybrid scoring
-    final_scores = (0.4 * tfidf_scores) + (0.6 * sbert_scores)
+    final_scores = (0.35 * tfidf_scores) + (0.65 * sbert_scores)
 
-    # ---------------- City Detection ----------------
+    # city detection
     canonical_city_vocab = sorted(
         place_reviews["City_canon"].dropna().unique().tolist()
     )
@@ -146,49 +169,33 @@ def hybrid_search_with_tags(
     city_mask = np.ones(n_places, dtype=bool)
 
     if detected_city:
-
-        # strict exact match first
         city_mask = (
             place_reviews["City_canon"]
-            .fillna("")
             .astype(str)
             == detected_city
         ).values
 
-        # fallback for Goa-like fragmented cities
         if city_mask.sum() == 0:
-            city_mask = (
-                place_reviews["City_canon"]
-                .fillna("")
-                .astype(str)
-                .str.contains(detected_city, case=False, na=False)
-            ).values
-
-        if city_mask.sum() == 0:
-            print(f"No results in {detected_city}")
             return _empty_results_df()
 
     mask = city_mask.copy()
 
-    # ---------------- Intent Detection ----------------
-    detected_tags, detect_method = detect_intent(
+    # intent detection
+    detected_tags, _ = detect_intent(
         query,
         model,
         tag_norm,
         tag_names
     )
 
-    # ---------------- Soft Boost ----------------
+    # soft boost using auto_tags
     if soft_boost and detected_tags:
-        for tag in detected_tags:
-            col = f"is_{tag}"
-            if col in place_reviews.columns:
-                final_scores += (
-                    boost_weight *
-                    place_reviews[col].astype(float).values
-                )
+        for i in range(n_places):
+            tags_here = place_reviews.iloc[i]["auto_tags"]
+            overlap = len(set(tags_here) & set(detected_tags))
+            final_scores[i] += boost_weight * overlap
 
-    # ---------------- Rating + Popularity Boost ----------------
+    # rating boost
     rating_scores = (
         place_reviews["avg_rating"].fillna(0).values *
         np.log1p(place_reviews["review_count"].fillna(0).values)
@@ -199,18 +206,15 @@ def hybrid_search_with_tags(
 
     final_scores += rating_boost_weight * rating_scores
 
-    # ---------------- Filter Candidates ----------------
     candidates_idx = np.where(mask)[0]
 
     if len(candidates_idx) == 0:
         return _empty_results_df()
 
     candidate_scores = final_scores[candidates_idx]
-
     order = np.argsort(candidate_scores)[::-1]
     top_idx = candidates_idx[order[:top_n]]
 
-    # ---------------- Final Results ----------------
     result_cols = [
         "City", "Place", "avg_rating", "review_count",
         "auto_tag", "auto_tags", "top_keywords",
@@ -218,12 +222,8 @@ def hybrid_search_with_tags(
     ]
 
     result = place_reviews.loc[top_idx, result_cols].copy()
-
     result["final_score"] = final_scores[top_idx]
 
-    result = result.reset_index(drop=True)
-
-    # Diagnostics
     print_diagnostics(
         query=query,
         detected_city=detected_city,
@@ -233,4 +233,4 @@ def hybrid_search_with_tags(
         candidate_count_after_tag_filter=len(candidates_idx)
     )
 
-    return result
+    return result.reset_index(drop=True)
